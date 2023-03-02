@@ -1,0 +1,72 @@
+blocked_stratified_f <- function(seed=NULL, trtseq=NULL, 
+                                 covmat =NULL,block_size=NULL,nsample){
+  library(dplyr)
+  library(blockrand)
+  set.seed(seed)
+  
+  covmat <- as.data.frame(covmat)
+  covmat_tmp <- covmat %>% group_by_all(.) %>% 
+    mutate(n=c(1:n())) %>% 
+    mutate(unique_id = paste0(c1,c2,n)) %>% 
+    select(-n)
+  
+  
+  
+  temp_res <- do.call(paste, c(covmat[colnames(covmat)], sep = "")) %>%
+    table() %>% data.frame()
+  
+  
+  
+  block_size1 <- ifelse(is.null(block_size),c(1:8),block_size/length(trtseq))
+  
+  if(block_size%%length(trtseq)!=0){
+    print("error, block size 需要是treatment group的倍数")
+  }
+  final_holder <- NULL
+  for(j in 1:nrow(temp_res)){
+    
+    
+    final_res <- blockrand(n=nsample,num.levels = length(trtseq),block.sizes = block_size1) %>% 
+      mutate(unique_id=paste0(as.vector(temp_res$.)[j],id)) 
+    #%>% 
+    # mutate(strata = temp_res$.[j])
+    final_holder <- rbind(final_holder,final_res[1:temp_res$Freq[j],])
+  }
+  
+  final <- inner_join(covmat_tmp,final_holder,by=c('unique_id')) 
+  
+  #return(cbind(covmat,final_holder))
+  return(final)
+  
+}
+seed=123
+nsample <- 40
+trtseq <- c(1, 2)
+block_size=4
+#ratio <- c(1, 1)
+c1 <- sample(seq(1, 2), nsample, replace = TRUE, prob = c(0.4, 0.6)) 
+c2 <- sample(seq(10, 9), nsample, replace = TRUE, prob = c(0.3, 0.7))
+
+covmat <- data.frame(c1,c2)
+
+tmp <- list('c1'=c1,'c2'=c2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+test4 <- blocked_stratified_f(seed=seed,
+                              trtseq=trtseq,
+                              covmat =covmat,
+                              block_size=block_size,
+                              nsample=nsample)
